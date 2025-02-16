@@ -1,5 +1,6 @@
 SECTIONS = \
 	00-bootstrap \
+	01-helloRVOS \
 
 .DEFAULT_GOAL := all
 all :
