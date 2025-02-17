@@ -30,7 +30,7 @@ typedef enum
 
 typedef enum{
     GPIO4 = 5,
-    GPIO5 = 5
+    GPIO5 = 6
 }IO_MUX_Typedef;
 
 typedef enum
@@ -150,22 +150,27 @@ void uart_init(){
     *(UART_REG(CONF0)) &= (~(1 << 18));
     // uart_id |= (0x01 << 31);
     // uart_write(ID,uart_id);
-    //*(UART_REG(CONF1)) &= (~(0xff));
-    //*(UART_REG(CONF1)) |= 0x10;
-    //*(UART_REG(INT_ENA)) |= (1 << 0); 
+    *(UART_REG(CONF1)) &= (~(0x1ff));
+    *(UART_REG(CONF1)) |= 0x10;
+    *(UART_REG(INT_ENA)) |= (1 << 0); 
 
     //GPIO func select
     *(IO_MUX_REG(GPIO4)) &= (~(0x7 << 12));
     *(IO_MUX_REG(GPIO4)) |= (1<< 12);
+
     *(IO_MUX_REG(GPIO5)) &= (~(0x7 << 12));
     *(IO_MUX_REG(GPIO5)) |= (1<< 12);
+    *(IO_MUX_REG(GPIO5)) |= (1<< 8);
+    *(IO_MUX_REG(GPIO5)) |= (1<< 9);
+
     //GPIO Pin connect to uart peripheral
     *(GPIO_REG(0x0554+4*4)) &= (~(0xff));
     *(GPIO_REG(0x0554+4*4)) |= (0x9);
-    *(GPIO_REG(0x0154+4*5)) &= (~(0xff));
-    *(GPIO_REG(0x0154+4*5)) |= (0x9);
+
+    *(GPIO_REG(0x0154+4*9)) &= (~(0x7f));
+    *(GPIO_REG(0x0154+4*9)) |= (0x5);
     //use peripheral output enable signal
-    *(GPIO_REG(0x0554+4*4)) &= (~(1 << 9));
+    *(GPIO_REG(0x0554+4*9)) |= (1 << 6);
 }
 
 int uart_getc(void){

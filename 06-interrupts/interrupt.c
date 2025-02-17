@@ -4,6 +4,7 @@
 #include "os.h"
 
 #define INTERRUPT_REG(reg)  ((volatile uint32_t*)(INTERRUPT + reg))
+#define UART1_CPU_IRQ	3
 
 typedef enum{
 	UART1_INTR_MAP_REG = 0x0058,
@@ -28,15 +29,18 @@ void interrupt_init(){
 	w_mstatus(0);
 	printf("interrupt init start\n");
 
-	(*INTERRUPT_REG(CPU_INT_TYPE_REG)) &= (~(1 << 1));
+	(*INTERRUPT_REG(CPU_INT_TYPE_REG)) &= (~(1 << UART1_CPU_IRQ));
+
+	printf("interrupt init start\n");	
+	(*INTERRUPT_REG(UART1_INTR_MAP_REG)) &= (~(0x1f));
+	(*INTERRUPT_REG(UART1_INTR_MAP_REG)) = UART1_CPU_IRQ;
+
 	printf("interrupt init start\n");
-	(*INTERRUPT_REG(UART1_INTR_MAP_REG)) = 1;
+	(*INTERRUPT_REG(CPU_INT_PRI_3_REG)) = UART1_CPU_IRQ;
 	printf("interrupt init start\n");
-	(*INTERRUPT_REG(CPU_INT_PRI_1_REG)) = 1;
+	(*INTERRUPT_REG(CPU_INT_THRESH_REG)) = 2;
 	printf("interrupt init start\n");
-	(*INTERRUPT_REG(CPU_INT_THRESH_REG)) = 0;
-	printf("interrupt init start\n");
-	(*INTERRUPT_REG(CPU_INT_ENABLE_REG)) = (1 <<1);
+	(*INTERRUPT_REG(CPU_INT_ENABLE_REG)) = (1 << UART1_CPU_IRQ);
 	printf("interrupt init start\n");
 
 	w_mstatus(mie);
@@ -50,6 +54,6 @@ int interrupt_claim(){
 }
 
 void interrupt_complete(uint32_t irq){
-	(*INTERRUPT_REG(UART1_INTR_MAP_REG)) = irq;
+	(*INTERRUPT_REG(CPU_INT_CLEAR_REG)) |= (1 << 3);
 	(*INTERRUPT_REG(UART1_INTR_MAP_REG)) = 0;
 }
