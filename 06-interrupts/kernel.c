@@ -1,5 +1,7 @@
 #include "os.h"
 
+char ch;
+
 void start_kernel(void){
     wdt_disable();
     task_delay(100);
@@ -22,8 +24,11 @@ void start_kernel(void){
     uart_puts("Would not go here!\r\n");
     
     while(1){
-	    if(uart_getc() != 0){
-		printf("uart rx : %c!\n",uart_getc());
+	    printf("I am alive!\n");
+	    if((ch = uart_getc()) != 0){
+		printf("uart rx : %c!\n",ch);
+		uart_putc(ch);
 	    }
+	    task_delay(1000);
     };
 }

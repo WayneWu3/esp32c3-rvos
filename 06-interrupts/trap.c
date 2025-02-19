@@ -16,14 +16,16 @@ reg_t trap_handler(reg_t epc, reg_t cause)
 	reg_t cause_code = cause & MCAUSE_MASK_ECODE;
 	
 	if (cause & MCAUSE_MASK_INTERRUPT) {
+		//return_pc += 4;
+		printf("return pc:%lx\n",return_pc);
 		/* Asynchronous trap - interrupt */
 		switch (cause_code) {
 		case 1:
 			printf("uart1 interruption! id = %d\n",1);
-			external_interrupt_handler();
 			break;
 		case 3:
-			printf("software interruption!\n");
+			printf("uart1 interruption!\n");
+			external_interrupt_handler();
 			break;
 		case 7:
 			printf("timer interruption!\n");
@@ -33,7 +35,6 @@ reg_t trap_handler(reg_t epc, reg_t cause)
 			break;
 		case 22:
 			printf("uart1 interruption! id = %d\n",22);
-			external_interrupt_handler();
 			break;
 		default:
 			printf("Unknown async exception! Code = %ld\n", cause_code);
@@ -42,21 +43,23 @@ reg_t trap_handler(reg_t epc, reg_t cause)
 	} else {
 		/* Synchronous trap - exception */
 		printf("Sync exceptions! Code = %ld\n", cause_code);
-		//panic("OOPS! What can I do!");
-		return_pc += 4;
+		panic("OOPS! What can I do!");
+		//return_pc += 4;
 	}
-
+	printf("back!\n");
 	return return_pc;
 }
 
 void external_interrupt_handler(){
 	uint32_t irq = interrupt_claim();
-	if(irq &= 0x01){
+	printf("unexpected interrupt irq = %lx\n", irq);
+	if(irq & (1<<22)){
 		uart_isr();
 	}else if(irq){
 		printf("unexpected interrupt irq = %d\n", irq);
 	}
 
+	printf("unexpected interrupt irq = %lx\n", irq);
 	if(irq){
 		interrupt_complete(irq);
 	}

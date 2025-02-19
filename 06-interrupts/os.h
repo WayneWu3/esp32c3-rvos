@@ -10,8 +10,8 @@
 
 /* uart */
 extern void uart_init(void);
-extern int uart_getc();
-extern int uart_putc(char ch);
+extern char uart_getc();
+extern void uart_putc(char ch);
 extern void uart_puts(char *s);
 extern void uart_isr();
 

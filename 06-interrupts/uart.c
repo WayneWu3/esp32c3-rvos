@@ -1,5 +1,6 @@
 #include "types.h"
 #include "platform.h"
+#include "os.h"
 
 #define UART_REG(reg)   ((volatile uint32_t*)(UART1 + (reg << 2)))
 #define GPIO_REG(reg)   ((volatile uint32_t*)(GPIO + reg))
@@ -122,15 +123,16 @@ void uart_init(){
     *(SYS_REG(SYSCLK_CONF)) |= 0x401;
 
     //enable uart clock
-    *(SYS_REG(PERIP_CLK_EN0)) |= (1 << 5);
+    *(SYS_REG(PERIP_CLK_EN0)) |= ((1 << 24) | (1 << 5));
 
     //reset uart
+    *(SYS_REG(PERIP_RST_EN0)) &= (~(1 << 5));
     *(UART_REG(CLK_CONF)) |= (1 << 23);
     *(SYS_REG(PERIP_RST_EN0)) |= (1 << 5);
     *(SYS_REG(PERIP_RST_EN0)) &= (~(1 << 5));
     *(UART_REG(CLK_CONF)) &= (~(1 << 23));
-    // *(UART_REG(ID)) &= (~(1 << 30));
-    // while((uart_read(ID) & (0x01 << 31)) != 0);
+    *(UART_REG(ID)) &= (~(1 << 30));
+    while((uart_read(ID) & (0x01 << 31)) != 0);
 
     //uart configuration    UART_INPUT_CORE = APB_CLK = 80MHz baudrate = 115200
     *(UART_REG(CLK_CONF)) = ( (*(UART_REG(CLK_CONF)) & (~(0x3 << 20)))| (1 << 20));
@@ -141,17 +143,20 @@ void uart_init(){
     *(UART_REG(CONF0)) &= (~(1 << 1));
     *(UART_REG(CONF0)) |= 0x1c;
     *(UART_REG(IDLE_CONF)) &= (~(0x3ff << 10));
-    *(UART_REG(CONF1)) |= ((1 << 20));
+    *(UART_REG(CONF1)) &= (~(1 << 20));
+    *(UART_REG(ID)) |= (1 << 31);
     //rxfifo rst
     *(UART_REG(CONF0)) |= (1 << 17);
     *(UART_REG(CONF0)) &= (~(1 << 17));
     //txfifo rst
     *(UART_REG(CONF0)) |= (1 << 18);
     *(UART_REG(CONF0)) &= (~(1 << 18));
-    // uart_id |= (0x01 << 31);
-    // uart_write(ID,uart_id);
+
+    *(UART_REG(CONF1)) &= (~(0x1ff << 9));
+    *(UART_REG(INT_ENA)) &= (~(1 << 1)); 
+
     *(UART_REG(CONF1)) &= (~(0x1ff));
-    *(UART_REG(CONF1)) |= 0x10;
+    *(UART_REG(CONF1)) |= 0x01;
     *(UART_REG(INT_ENA)) |= (1 << 0); 
 
     //GPIO func select
@@ -169,12 +174,23 @@ void uart_init(){
 
     *(GPIO_REG(0x0154+4*9)) &= (~(0x7f));
     *(GPIO_REG(0x0154+4*9)) |= (0x5);
+    *(GPIO_REG(0x0154+4*9)) |= (1 << 6);
     //use peripheral output enable signal
     *(GPIO_REG(0x0554+4*9)) |= (1 << 6);
 }
 
-int uart_getc(void){
-	if((*UART_REG(STATUS)) & 0x100){
+char uart_getc(void){
+	printf("uart rx fifo cnt : %lx\n",*UART_REG(STATUS));
+	    printf("uart int ena %lx\n",*((volatile uint32_t*)(0x60010000+0x000c)));
+    printf("uart status %lx\n",*((volatile uint32_t*)(0x60010000+0x001c)));
+    printf("uart conf0 %lx\n",*((volatile uint32_t*)(0x60010000+0x0020)));
+    printf("uart conf1 %lx\n",*((volatile uint32_t*)(0x60010000+0x0024)));
+    printf("uart flow conf %lx\n",*((volatile uint32_t*)(0x60010000+0x0034)));
+    printf("uart swfc conf 0 %lx\n",*((volatile uint32_t*)(0x60010000+0x003c)));
+    printf("uart swfc conf 1 %lx\n",*((volatile uint32_t*)(0x60010000+0x0040)));
+    printf("uart men conf 1 %lx\n",*((volatile uint32_t*)(0x60010000+0x0060)));
+	printf("uart int raw : %lx\n",*(UART_REG(INT_RAW)));
+	if((*UART_REG(STATUS)) & 0x1ff){
 		char ch = (*UART_REG(FIFO)) & 0Xff;
 		return ch;
 	}
@@ -194,12 +210,19 @@ void uart_puts(char *s){
 
 void uart_isr(){
 	while(1){
-		int c = uart_getc();
-		if(c == -1){
+		printf("uart int status:%lx\n",*(UART_REG(INT_ST)));
+		printf("uart int raw:%lx\n",*(UART_REG(INT_RAW)));
+	uint32_t irq = interrupt_claim();
+	printf("unexpected interrupt irq = %lx\n", irq);
+		//panic("OOPS! What can I do!");
+		char c = uart_getc();
+		if(c == 0){
 			break;
 		}else{
 			uart_putc((char)c);
 			uart_putc('\n');
+			printf("uart isr!\n");
+			break;
 		}
 	}
 }

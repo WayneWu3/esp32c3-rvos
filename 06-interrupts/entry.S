@@ -186,7 +186,36 @@ _panic_handler:
     .weak _interrupt_handler
     .type _interrupt_handler, @function
 _interrupt_handler:
-    mret
+        # save context(registers).
+        csrrw   t6, mscratch, t6        # swap t6 and mscratch
+        reg_save t6
+
+        # Save the actual t6 register, which we swapped into
+        # mscratch
+        mv      t5, t6                  # t5 points to the context of current task
+        csrr    t6, mscratch            # read t6 back from mscratch
+        STORE   t6, 30*SIZE_REG(t5)     # save t6 with t5 as base
+
+        # Restore the context pointer into mscratch
+        csrw    mscratch, t5
+
+        # call the C trap handler in trap.c
+        csrr    a0, mepc
+        csrr    a1, mcause
+        call    trap_handler
+
+        # trap_handler will return the return address via a0.
+        csrw    mepc, a0
+        # restore context(registers).
+        csrr    t6, mscratch
+        reg_restore t6
+
+       mret
+
+#    csrr    a0, mepc
+#    csrr    a1, mcause
+#    call trap_handler
+#    mret
     .size  _interrupt_handler, .-_interrupt_handler
 .end
 
