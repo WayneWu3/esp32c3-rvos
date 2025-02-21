@@ -35,6 +35,7 @@ void user_task1(void)
 
 void os_main(void)
 {
+	//trap_test();
 	task_create(user_task0);
 	task_create(user_task1);
 }

@@ -1,5 +1,6 @@
 #include "os.h"
 
+extern void trap_test();
 void start_kernel(void){
     wdt_disable();
     task_delay(100);
@@ -12,9 +13,10 @@ void start_kernel(void){
     page_init();
     page_test();
 
+    //sched_init();
     trap_init();
+    trap_test();
 
-    sched_init();
     os_main();
     schedule();
 

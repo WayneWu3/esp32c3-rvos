@@ -10,11 +10,20 @@ void trap_init()
 	w_mtvec((reg_t)trap_vector);
 }
 
+void trap_readreg(){
+	reg_t mscratch = r_mscratch();
+	printf("mscratch = %lx\n",mscratch);
+	for(int i = 0;i < 32;i++){
+		printf("no.%d = %lx\n",i,*(volatile uint32_t*)(mscratch+i*4));
+	}
+}
+
 reg_t trap_handler(reg_t epc, reg_t cause)
 {
 	reg_t return_pc = epc;
 	reg_t cause_code = cause & MCAUSE_MASK_ECODE;
 	
+	trap_readreg();
 	if (cause & MCAUSE_MASK_INTERRUPT) {
 		/* Asynchronous trap - interrupt */
 		switch (cause_code) {

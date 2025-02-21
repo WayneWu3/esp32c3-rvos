@@ -59,6 +59,8 @@ SECTIONS
 	     PROVIDE(_bss_end = .);
 	}>ram
 
+  	__global_pointer$ = MIN(_data_start - 0x800, _bss_end - 0x800);
+
 	PROVIDE(_memory_start = ORIGIN(ram));
 	PROVIDE(_memory_end = ORIGIN(ram) + LENGTH(ram));
 
