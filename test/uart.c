@@ -1,5 +1,6 @@
 #include "types.h"
 #include "platform.h"
+#include "os.h"
 
 #define UART_REG(reg)   ((volatile uint32_t*)(UART1 + (reg << 2)))
 #define GPIO_REG(reg)   ((volatile uint32_t*)(GPIO + reg))
@@ -29,7 +30,8 @@ typedef enum
 }GPIO_TypeDef;
 
 typedef enum{
-    GPIO4 = 5
+    GPIO4 = 5,
+    GPIO5 = 6
 }IO_MUX_Typedef;
 
 typedef enum
@@ -121,15 +123,16 @@ void uart_init(){
     *(SYS_REG(SYSCLK_CONF)) |= 0x401;
 
     //enable uart clock
-    *(SYS_REG(PERIP_CLK_EN0)) |= (1 << 5);
+    *(SYS_REG(PERIP_CLK_EN0)) |= ((1 << 24) | (1 << 5));
 
     //reset uart
+    *(SYS_REG(PERIP_RST_EN0)) &= (~(1 << 5));
     *(UART_REG(CLK_CONF)) |= (1 << 23);
     *(SYS_REG(PERIP_RST_EN0)) |= (1 << 5);
     *(SYS_REG(PERIP_RST_EN0)) &= (~(1 << 5));
     *(UART_REG(CLK_CONF)) &= (~(1 << 23));
-    // *(UART_REG(ID)) &= (~(1 << 30));
-    // while((uart_read(ID) & (0x01 << 31)) != 0);
+    *(UART_REG(ID)) &= (~(1 << 30));
+    while((uart_read(ID) & (0x01 << 31)) != 0);
 
     //uart configuration    UART_INPUT_CORE = APB_CLK = 80MHz baudrate = 115200
     *(UART_REG(CLK_CONF)) = ( (*(UART_REG(CLK_CONF)) & (~(0x3 << 20)))| (1 << 20));
@@ -141,23 +144,53 @@ void uart_init(){
     *(UART_REG(CONF0)) |= 0x1c;
     *(UART_REG(IDLE_CONF)) &= (~(0x3ff << 10));
     *(UART_REG(CONF1)) &= (~(1 << 20));
+    *(UART_REG(ID)) |= (1 << 31);
     //rxfifo rst
     *(UART_REG(CONF0)) |= (1 << 17);
     *(UART_REG(CONF0)) &= (~(1 << 17));
     //txfifo rst
     *(UART_REG(CONF0)) |= (1 << 18);
     *(UART_REG(CONF0)) &= (~(1 << 18));
-    // uart_id |= (0x01 << 31);
-    // uart_write(ID,uart_id);
+
+    *(UART_REG(CONF1)) &= (~(0x1ff << 9));
+    *(UART_REG(INT_ENA)) &= (~(1 << 1)); 
+
+    *(UART_REG(CONF1)) &= (~(0x1ff));
+    *(UART_REG(CONF1)) |= 0x10;
+    *(UART_REG(INT_ENA)) |= (1 << 0); 
 
     //GPIO func select
     *(IO_MUX_REG(GPIO4)) &= (~(0x7 << 12));
     *(IO_MUX_REG(GPIO4)) |= (1<< 12);
+
+    *(IO_MUX_REG(GPIO5)) &= (~(0x7 << 12));
+    *(IO_MUX_REG(GPIO5)) |= (1<< 12);
+    *(IO_MUX_REG(GPIO5)) |= (1<< 8);
+    *(IO_MUX_REG(GPIO5)) |= (1<< 9);
+
     //GPIO Pin connect to uart peripheral
     *(GPIO_REG(0x0554+4*4)) &= (~(0xff));
     *(GPIO_REG(0x0554+4*4)) |= (0x9);
+
+    *(GPIO_REG(0x0154+4*9)) &= (~(0x7f));
+    *(GPIO_REG(0x0154+4*9)) |= (0x5);
+    *(GPIO_REG(0x0154+4*9)) |= (1 << 6);
     //use peripheral output enable signal
-    *(GPIO_REG(0x0554+4*4)) &= (~(1 << 9));
+    *(GPIO_REG(0x0554+4*9)) |= (1 << 6);
+}
+
+void uart_gets(void){
+	uint8_t buf[32],i = 0;
+	int cnt = (*UART_REG(STATUS)) & 0X3ff;
+	if(cnt != 0){
+		for(i = 0;i < cnt;i++)
+			*(buf+i) = (*UART_REG(FIFO)) & 0xff;
+		*(buf+i) = '\0';
+		printf("recv :%s\n",buf);
+	}
+	*(UART_REG(CONF0)) |= (1 << 17);
+	*(UART_REG(CONF0)) &= (~(1 << 17));
+	return;
 }
 
 void uart_putc(char ch){
@@ -170,6 +203,14 @@ void uart_puts(char *s){
     while(*s){
         uart_putc(*s++);
     }
+}
+
+void uart_isr(){
+	while(1){
+		*(UART_REG(INT_CLR)) |= (1 << 0);
+		uart_gets();
+		break;
+	}
 }
 
 void wdt_disable(void){

@@ -2,6 +2,9 @@
 #define STORE		sw
 #define SIZE_REG	4
 
+	.equ SAVE_REGS, 28
+	.equ CONTEXT_SIZE, (SAVE_REGS * 4)
+
 # Save all General-Purpose(GP) registers to context.
 # struct context *base = &ctx_task;
 # base->ra = ra;

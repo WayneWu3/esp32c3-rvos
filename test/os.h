@@ -2,6 +2,7 @@
 #define __OS_H__
 
 #include "types.h"
+#include "riscv.h"
 #include "platform.h"
 
 #include <stddef.h>
@@ -9,15 +10,17 @@
 
 /* uart */
 extern void uart_init(void);
-extern int uart_putc(char ch);
+extern char uart_getc();
+extern void uart_putc(char ch);
 extern void uart_puts(char *s);
+extern void uart_isr();
 
 /* rtc */
 extern void wdt_disable(void);
 
 /* printf */
 //extern int  printf(const char* s, ...);
-//extern void panic(char *s);
+extern void panic(char *s);
 
 /* memory management */
 extern void page_init(void);
@@ -65,7 +68,16 @@ extern void sched_init(void);
 extern void schedule(void);
 
 extern int  task_create(void (*task)(void));
+extern void task_yield();
 extern void task_delay(volatile int count);
 
+void os_main(void);
+
+extern void trap_init(void);
+extern void trap_test(void);
+
+extern void interrupt_init();
+extern int interrupt_claim();
+extern void interrupt_complete();
 extern void printf();
 #endif /* __OS_H__ */

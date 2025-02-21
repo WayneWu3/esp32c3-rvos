@@ -8,5 +8,8 @@ SRCS_C = \
 	uart.c	\
 	page.c	\
 	sched.c	\
+	user.c	\
+	trap.c	\
+	interrupt.c \
 
 include ../common.mk

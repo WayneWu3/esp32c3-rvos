@@ -1,5 +1,7 @@
 #include "os.h"
 
+char ch;
+
 void start_kernel(void){
     wdt_disable();
     task_delay(100);
@@ -12,11 +14,15 @@ void start_kernel(void){
     page_init();
     page_test();
 
-    sched_init();
+    trap_init();
+    interrupt_init();
+
+    //sched_init();
+    os_main();
     schedule();
 
-    uart_puts("Would not go here!\r\n");
-    
     while(1){
+	    printf("I am alive!\n");
+	    task_delay(1000);
     };
 }

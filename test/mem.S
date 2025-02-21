@@ -1,6 +1,19 @@
 #define SIZE_PTR .word
 
 .section .rodata
+
+.global IROM_START
+IROM_START: SIZE_PTR _irom_start
+
+.global IROM_SIZE
+IROM_SIZE: SIZE_PTR _irom_size
+
+.global DROM_START
+DROM_START: SIZE_PTR _drom_start
+
+.global DROM_SIZE
+DROM_SIZE: SIZE_PTR _drom_size
+
 .global HEAP_START
 HEAP_START: SIZE_PTR _heap_start
 
@@ -30,3 +43,6 @@ BSS_START: SIZE_PTR _bss_start
 
 .global BSS_END
 BSS_END: SIZE_PTR _bss_end
+
+.global MEMORY_END
+MEMORY_END: SIZE_PTR _memory_end
