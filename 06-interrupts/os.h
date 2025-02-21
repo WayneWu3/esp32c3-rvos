@@ -74,6 +74,7 @@ extern void task_delay(volatile int count);
 void os_main(void);
 
 extern void trap_init(void);
+extern void trap_test(void);
 
 extern void interrupt_init();
 extern int interrupt_claim();

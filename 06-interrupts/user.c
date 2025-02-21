@@ -17,8 +17,7 @@ void user_task0(void)
 		printf("Task 0: Running...\r\n");
 		task_delay(1000);
 
-		//trap_test();
-		uart_putc(uart_getc());
+		trap_test();
 		task_yield();
 	}
 }

@@ -156,7 +156,7 @@ void uart_init(){
     *(UART_REG(INT_ENA)) &= (~(1 << 1)); 
 
     *(UART_REG(CONF1)) &= (~(0x1ff));
-    *(UART_REG(CONF1)) |= 0x01;
+    *(UART_REG(CONF1)) |= 0x10;
     *(UART_REG(INT_ENA)) |= (1 << 0); 
 
     //GPIO func select
@@ -179,21 +179,18 @@ void uart_init(){
     *(GPIO_REG(0x0554+4*9)) |= (1 << 6);
 }
 
-char uart_getc(void){
-	printf("uart rx fifo cnt : %lx\n",*UART_REG(STATUS));
-	    printf("uart int ena %lx\n",*((volatile uint32_t*)(0x60010000+0x000c)));
-    printf("uart status %lx\n",*((volatile uint32_t*)(0x60010000+0x001c)));
-    printf("uart conf0 %lx\n",*((volatile uint32_t*)(0x60010000+0x0020)));
-    printf("uart conf1 %lx\n",*((volatile uint32_t*)(0x60010000+0x0024)));
-    printf("uart flow conf %lx\n",*((volatile uint32_t*)(0x60010000+0x0034)));
-    printf("uart swfc conf 0 %lx\n",*((volatile uint32_t*)(0x60010000+0x003c)));
-    printf("uart swfc conf 1 %lx\n",*((volatile uint32_t*)(0x60010000+0x0040)));
-    printf("uart men conf 1 %lx\n",*((volatile uint32_t*)(0x60010000+0x0060)));
-	printf("uart int raw : %lx\n",*(UART_REG(INT_RAW)));
-	if((*UART_REG(STATUS)) & 0x1ff){
-		char ch = (*UART_REG(FIFO)) & 0Xff;
-		return ch;
+void uart_gets(void){
+	uint8_t buf[32],i = 0;
+	int cnt = (*UART_REG(STATUS)) & 0X3ff;
+	if(cnt != 0){
+		for(i = 0;i < cnt;i++)
+			*(buf+i) = (*UART_REG(FIFO)) & 0xff;
+		*(buf+i) = '\0';
+		printf("recv :%s\n",buf);
 	}
+	*(UART_REG(CONF0)) |= (1 << 17);
+	*(UART_REG(CONF0)) &= (~(1 << 17));
+	return;
 }
 
 void uart_putc(char ch){
@@ -210,20 +207,9 @@ void uart_puts(char *s){
 
 void uart_isr(){
 	while(1){
-		printf("uart int status:%lx\n",*(UART_REG(INT_ST)));
-		printf("uart int raw:%lx\n",*(UART_REG(INT_RAW)));
-	uint32_t irq = interrupt_claim();
-	printf("unexpected interrupt irq = %lx\n", irq);
-		//panic("OOPS! What can I do!");
-		char c = uart_getc();
-		if(c == 0){
-			break;
-		}else{
-			uart_putc((char)c);
-			uart_putc('\n');
-			printf("uart isr!\n");
-			break;
-		}
+		*(UART_REG(INT_CLR)) |= (1 << 0);
+		uart_gets();
+		break;
 	}
 }
 

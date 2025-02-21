@@ -14,5 +14,7 @@
 #define TIMG1	0x60020000L
 #define INTERRUPT 0x600C2000L
 
-#define UART1_IRQ	22
+#define UART1_INTR	22
+#define UART1_CPU_IRQ	7
+
 #endif

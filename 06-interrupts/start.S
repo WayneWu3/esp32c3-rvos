@@ -3,6 +3,10 @@
     .text
 
 _start:
+
+    lui x15,0x3fc83
+    csrw mscratch,x15
+
     la  sp, _stack_end
 
     la a0, _data_start
