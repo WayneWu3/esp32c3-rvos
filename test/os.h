@@ -61,7 +61,8 @@ struct context {
 	reg_t t3;
 	reg_t t4;
 	reg_t t5;
-	reg_t t6;
+	
+	reg_t pc;
 };
 
 extern void sched_init(void);
@@ -77,7 +78,16 @@ extern void trap_init(void);
 extern void trap_test(void);
 
 extern void interrupt_init();
-extern int interrupt_claim();
+extern int interrupt0_claim();
+extern int interrupt1_claim();
 extern void interrupt_complete();
 extern void printf();
+
+extern void timer_init();
+extern void timer_read();
+extern void timer_isr();
+
+extern void software_interrupt_enable();
+extern void software_interrupt_disable();
+
 #endif /* __OS_H__ */

@@ -27,7 +27,7 @@ void timer_init(){
 	*(SYSTIMER_REG(TARGET0_CONF)) &= ~(1 << 31);
 	//set period
 	*(SYSTIMER_REG(TARGET0_CONF)) &= ~(0x3ffffff);
-	*(SYSTIMER_REG(TARGET0_CONF)) |= 0xf42400;
+	*(SYSTIMER_REG(TARGET0_CONF)) |= 0x2dc6c00;
 	//load period
 	*(SYSTIMER_REG(COMP0_LOAD)) |= (1 << 0);
 	//set period mode
